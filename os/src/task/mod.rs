@@ -17,6 +17,7 @@ mod task;
 use crate::config::MAX_APP_NUM;
 use crate::loader::{get_num_app, init_app_cx};
 use crate::sync::UPSafeCell;
+use crate::trace_array::zero_out_array;
 use lazy_static::*;
 use switch::__switch;
 pub use task::{TaskControlBlock, TaskStatus};
@@ -43,7 +44,7 @@ pub struct TaskManager {
 pub struct TaskManagerInner {
     /// task list
     tasks: [TaskControlBlock; MAX_APP_NUM],
-    /// id of current `Running` task
+    /// id (which is also the index of the task in tasks) of current `Running` task
     current_task: usize,
 }
 
@@ -166,6 +167,7 @@ pub fn suspend_current_and_run_next() {
 
 /// Exit the current 'Running' task and run the next task in task list.
 pub fn exit_current_and_run_next() {
+    zero_out_array();
     mark_current_exited();
     run_next_task();
 }
