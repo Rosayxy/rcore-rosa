@@ -16,8 +16,12 @@ mod task;
 
 use crate::loader::{get_app_data, get_num_app};
 use crate::sync::UPSafeCell;
+<<<<<<< HEAD
 use crate::trap::TrapContext;
 use alloc::vec::Vec;
+=======
+use crate::trace_array::zero_out_array;
+>>>>>>> 1671c00 (feat: complete ch3 coding)
 use lazy_static::*;
 use switch::__switch;
 pub use task::{TaskControlBlock, TaskStatus};
@@ -43,8 +47,13 @@ pub struct TaskManager {
 /// The task manager inner in 'UPSafeCell'
 struct TaskManagerInner {
     /// task list
+<<<<<<< HEAD
     tasks: Vec<TaskControlBlock>,
     /// id of current `Running` task
+=======
+    tasks: [TaskControlBlock; MAX_APP_NUM],
+    /// id (which is also the index of the task in tasks) of current `Running` task
+>>>>>>> 1671c00 (feat: complete ch3 coding)
     current_task: usize,
 }
 
@@ -184,6 +193,7 @@ pub fn suspend_current_and_run_next() {
 
 /// Exit the current 'Running' task and run the next task in task list.
 pub fn exit_current_and_run_next() {
+    zero_out_array();
     mark_current_exited();
     run_next_task();
 }

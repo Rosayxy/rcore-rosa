@@ -31,12 +31,30 @@ mod process;
 use fs::*;
 use process::*;
 
+use crate::trace_array::incl_array;
+
+/// get the index of the trace
+pub fn get_trace_idx(ty: usize) -> usize {
+    match ty {
+        SYSCALL_WRITE => 0,
+        SYSCALL_EXIT => 1,
+        SYSCALL_YIELD => 2,
+        SYSCALL_GET_TIME => 3,
+        SYSCALL_TRACE => 4,
+        _ => panic!("Unsupported trace type: {}", ty),
+    }
+}
+
 /// handle syscall exception with `syscall_id` and other arguments
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
+    incl_array(get_trace_idx(syscall_id)).unwrap();
     match syscall_id {
-        SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
-        SYSCALL_EXIT => sys_exit(args[0] as i32),
-        SYSCALL_YIELD => sys_yield(),
+        SYSCALL_WRITE => {
+            sys_write(args[0], args[1] as *const u8, args[2])},
+        SYSCALL_EXIT => {
+            sys_exit(args[0] as i32)},
+        SYSCALL_YIELD => {
+            sys_yield()},
         SYSCALL_GET_TIME => sys_get_time(args[0] as *mut TimeVal, args[1]),
         SYSCALL_TRACE => sys_trace(args[0], args[1], args[2]),
         SYSCALL_MMAP => sys_mmap(args[0], args[1], args[2]),
