@@ -1,7 +1,10 @@
 //! rosa's trace array
 use core::sync::atomic::{AtomicIsize, Ordering};
 
-static mut GLOBAL_ARRAY_TRACE: [AtomicIsize; 5] = [
+static mut GLOBAL_ARRAY_TRACE: [AtomicIsize; 8] = [
+    AtomicIsize::new(0),
+    AtomicIsize::new(0),
+    AtomicIsize::new(0),
     AtomicIsize::new(0),
     AtomicIsize::new(0),
     AtomicIsize::new(0),
@@ -10,7 +13,7 @@ static mut GLOBAL_ARRAY_TRACE: [AtomicIsize; 5] = [
 ];
 /// writing to the global array
 pub fn write_to_array(index: usize, value: isize) -> Result<(), &'static str> {
-    if index >= 5 {
+    if index >= 8 {
         return Err("Index out of bounds");
     }
     
@@ -23,7 +26,7 @@ pub fn write_to_array(index: usize, value: isize) -> Result<(), &'static str> {
 
 /// Safe wrapper function to read from the array
 pub fn read_from_array(index: usize) -> Result<isize, &'static str> {
-    if index >= 5 {
+    if index >= 8 {
         return Err("Index out of bounds");
     }
     
@@ -34,7 +37,7 @@ pub fn read_from_array(index: usize) -> Result<isize, &'static str> {
 }
 /// incline the value in the array
 pub fn incl_array(index:usize) -> Result<(), &'static str>{
-    if index >= 5 {
+    if index >= 8 {
         return Err("Index out of bounds");
     }
     unsafe {
@@ -46,7 +49,7 @@ pub fn incl_array(index:usize) -> Result<(), &'static str>{
 
 pub fn zero_out_array(){
     unsafe {
-        for i in 0..5 {
+        for i in 0..8 {
             GLOBAL_ARRAY_TRACE[i].store(0, Ordering::SeqCst);
         }
     }

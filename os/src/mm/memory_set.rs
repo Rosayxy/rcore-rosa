@@ -51,6 +51,10 @@ impl MemorySet {
     pub fn token(&self) -> usize {
         self.page_table.token()
     }
+    /// get the mapping ranges of an elf
+    pub fn get_ranges(&self)->Vec<(usize,usize,MapPermission)>{
+        self.areas.iter().map(|area|area.get_range()).collect()
+    }
     /// Assume that no conflicts.
     pub fn insert_framed_area(
         &mut self,
@@ -272,6 +276,7 @@ pub struct MapArea {
 }
 
 impl MapArea {
+    /// new a map area
     pub fn new(
         start_va: VirtAddr,
         end_va: VirtAddr,
@@ -287,6 +292,7 @@ impl MapArea {
             map_perm,
         }
     }
+    /// map one page
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         let ppn: PhysPageNum;
         match self.map_type {
@@ -303,24 +309,28 @@ impl MapArea {
         page_table.map(vpn, ppn, pte_flags);
     }
     #[allow(unused)]
+    /// unmap one
     pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         if self.map_type == MapType::Framed {
             self.data_frames.remove(&vpn);
         }
         page_table.unmap(vpn);
     }
+    /// map
     pub fn map(&mut self, page_table: &mut PageTable) {
         for vpn in self.vpn_range {
             self.map_one(page_table, vpn);
         }
     }
     #[allow(unused)]
+    /// unmap
     pub fn unmap(&mut self, page_table: &mut PageTable) {
         for vpn in self.vpn_range {
             self.unmap_one(page_table, vpn);
         }
     }
     #[allow(unused)]
+    /// shrink to
     pub fn shrink_to(&mut self, page_table: &mut PageTable, new_end: VirtPageNum) {
         for vpn in VPNRange::new(new_end, self.vpn_range.get_end()) {
             self.unmap_one(page_table, vpn)
@@ -328,6 +338,7 @@ impl MapArea {
         self.vpn_range = VPNRange::new(self.vpn_range.get_start(), new_end);
     }
     #[allow(unused)]
+    /// append to
     pub fn append_to(&mut self, page_table: &mut PageTable, new_end: VirtPageNum) {
         for vpn in VPNRange::new(self.vpn_range.get_end(), new_end) {
             self.map_one(page_table, vpn)
@@ -356,12 +367,18 @@ impl MapArea {
             current_vpn.step();
         }
     }
+    /// get the mapping ranges of an elf
+    pub fn get_range(&self)->(usize,usize,MapPermission){
+        (self.vpn_range.get_start().0,self.vpn_range.get_end().0,self.map_perm)
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 /// map type for memory set: identical or framed
 pub enum MapType {
+    /// identical mapping, see docs for specifications
     Identical,
+    /// framed mapping, see docs for specifications
     Framed,
 }
 

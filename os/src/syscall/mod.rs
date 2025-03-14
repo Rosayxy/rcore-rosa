@@ -41,6 +41,9 @@ pub fn get_trace_idx(ty: usize) -> usize {
         SYSCALL_YIELD => 2,
         SYSCALL_GET_TIME => 3,
         SYSCALL_TRACE => 4,
+        SYSCALL_SBRK => 5,
+        SYSCALL_MMAP => 6,
+        SYSCALL_MUNMAP => 7,
         _ => panic!("Unsupported trace type: {}", ty),
     }
 }

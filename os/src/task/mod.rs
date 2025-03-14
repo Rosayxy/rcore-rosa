@@ -15,13 +15,11 @@ mod switch;
 mod task;
 
 use crate::loader::{get_app_data, get_num_app};
+use crate::mm::MapPermission;
 use crate::sync::UPSafeCell;
-<<<<<<< HEAD
 use crate::trap::TrapContext;
 use alloc::vec::Vec;
-=======
 use crate::trace_array::zero_out_array;
->>>>>>> 1671c00 (feat: complete ch3 coding)
 use lazy_static::*;
 use switch::__switch;
 pub use task::{TaskControlBlock, TaskStatus};
@@ -47,13 +45,8 @@ pub struct TaskManager {
 /// The task manager inner in 'UPSafeCell'
 struct TaskManagerInner {
     /// task list
-<<<<<<< HEAD
     tasks: Vec<TaskControlBlock>,
     /// id of current `Running` task
-=======
-    tasks: [TaskControlBlock; MAX_APP_NUM],
-    /// id (which is also the index of the task in tasks) of current `Running` task
->>>>>>> 1671c00 (feat: complete ch3 coding)
     current_task: usize,
 }
 
@@ -134,7 +127,11 @@ impl TaskManager {
         let inner = self.inner.exclusive_access();
         inner.tasks[inner.current_task].get_trap_cx()
     }
-
+    /// get virtual address ranges and permissions
+    pub fn get_ranges(&self)->Vec<(usize,usize,MapPermission)>{
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].memory_set.get_ranges()
+    }
     /// Change the current 'Running' task's program break
     pub fn change_current_program_brk(&self, size: i32) -> Option<usize> {
         let mut inner = self.inner.exclusive_access();
@@ -211,4 +208,9 @@ pub fn current_trap_cx() -> &'static mut TrapContext {
 /// Change the current 'Running' task's program break
 pub fn change_program_brk(size: i32) -> Option<usize> {
     TASK_MANAGER.change_current_program_brk(size)
+}
+
+/// get the elf ranges
+pub fn get_ranges()->Vec<(usize,usize,MapPermission)>{
+    TASK_MANAGER.get_ranges()
 }

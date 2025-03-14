@@ -1,4 +1,6 @@
 //! Types related to task management
+use alloc::vec::Vec;
+
 use super::TaskContext;
 use crate::config::TRAP_CONTEXT_BASE;
 use crate::mm::{
@@ -38,6 +40,10 @@ impl TaskControlBlock {
     /// get the user token
     pub fn get_user_token(&self) -> usize {
         self.memory_set.token()
+    }
+    /// get the mapping ranges of an elf
+    pub fn get_ranges(&self) -> Vec<(usize,usize,MapPermission)> {
+        self.memory_set.get_ranges()
     }
     /// Based on the elf info in program, build the contents of task in a new address space
     pub fn new(elf_data: &[u8], app_id: usize) -> Self {

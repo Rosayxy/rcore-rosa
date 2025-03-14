@@ -179,3 +179,30 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
     }
     v
 }
+
+/// map a range of virtual memory to physical memory with specific permission
+pub fn map_virt_range(token:usize,virt_start: usize, virt_end: usize,phys_start: usize,perm:PTEFlags){
+    let mut page_table = PageTable::from_token(token);
+    let mut phys_ppn = phys_start;
+    let mut start = virt_start;
+    while start < virt_end {
+        let start_va = VirtAddr::from(start);
+        let mut vpn = start_va.floor();
+        let ppn = PhysPageNum::from(phys_ppn);
+        page_table.map(vpn, ppn, perm);
+        vpn.step();
+        phys_ppn += 1;
+        start = vpn.into();
+    }
+}
+/// unmap a virtual range
+pub fn unmap_virt_range(token:usize,vpn_start:usize,vpn_end:usize){
+    let mut page_table = PageTable::from_token(token);
+    let mut vpn = VirtPageNum::from(vpn_start);
+    let mut start = vpn_start;
+    while start < vpn_end {
+        page_table.unmap(vpn);
+        vpn.step();
+        start = vpn.into();
+    }
+}
