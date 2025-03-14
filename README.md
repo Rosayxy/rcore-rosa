@@ -51,7 +51,6 @@ $ cd ci-user && make test CHAPTER=$ID
 Notice: $ID is from [3,4,5,6,8]
 
 ## notes
-## notes
 与进程有关的重要系统调用：fork & execve(将当前进程的地址空间清空并加载一个特定的可执行文件，返回用户态后开始它的执行)    
 
 waitpid: 当前进程等待一个子进程变成 zombie，然后回收其全部资源并收集其返回值      
@@ -117,3 +116,18 @@ exec 系统调用：个进程能够加载一个新的 ELF 可执行文件替换�
 
 ### 迁移 syscall
 把 task_manager 里面 get_ranges,insert/unmap frame 这些迁到 processor 里面去   
+然后是 sys_exec 的实现，先是调用 translated_str 找到要执行的应用名，并试图从应用加载器提供的 get_app_data_by_name 接口中获取对应的 ELF 数据，如果找到的话就调用 TaskControlBlock::exec 替换地址空间    
+
+syscall 之后重新获取进程上下文：新的 trap_handler 需要在syscall 返回之后重新获取 cx，即是当前应用的 Trap 上下文     
+
+sys_read 是用 sbi 提供的借口 "console_getchar" 实现的    
+
+exit_current_and_run_next: "相比前面的章节， exit_current_and_run_next 带有一个退出码作为参数，这个退出码会在 exit_current_and_run_next 写入当前进程的进程控制块"     
+
+父进程回收子进程资源：看 sys_waitpid 的实现    
+
+编程作业：思考维护 sys_get_time sys_mmap sys_munmap 和之前的相比有哪些不同，直觉是获得进程信息的渠道不一样     
+
+spawn 同时整合了 fork + exec 的实现，但是**不必像 fork 一样复制父进程的地址空间**    
+
+stride 调度：TODO 写的时候施工吧    
