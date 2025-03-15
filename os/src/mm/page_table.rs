@@ -1,5 +1,7 @@
 //! Implementation of [`PageTableEntry`] and [`PageTable`].
 
+use crate::config::PAGE_SIZE;
+
 use super::{frame_alloc, FrameTracker, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -27,7 +29,7 @@ bitflags! {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone,Debug)]
 #[repr(C)]
 /// page table entry structure
 pub struct PageTableEntry {
@@ -137,7 +139,7 @@ impl PageTable {
     #[allow(unused)]
     pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
         let pte = self.find_pte_create(vpn).unwrap();
-        assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
+        assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping, pte {:?}", vpn,pte);
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
     /// remove the map between virtual page number and physical page number
@@ -180,22 +182,34 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
     v
 }
 
-/// map a range of virtual memory to physical memory with specific permission
+/// map a range of virtual memory to physical memory with specific permission, the virt_start and virt_ends are all vpns, 左闭右开
+#[allow(unused)]
 pub fn map_virt_range(token:usize,virt_start: usize, virt_end: usize,phys_start: usize,perm:PTEFlags){
+    // println!("in mapping virt range: {} {} {} {}",virt_start,virt_end,phys_start,perm.bits());
     let mut page_table = PageTable::from_token(token);
     let mut phys_ppn = phys_start;
     let mut start = virt_start;
     while start < virt_end {
-        let start_va = VirtAddr::from(start);
+        let start_va = VirtAddr::from(start*PAGE_SIZE);
         let mut vpn = start_va.floor();
+        // println!("vpn: {:?}",vpn);
         let ppn = PhysPageNum::from(phys_ppn);
-        page_table.map(vpn, ppn, perm);
+        // 改为先 find pte 再 change permissions，不行的话再 map
+        if let Some(pte) = page_table.find_pte_create(vpn) {
+            if pte.is_valid(){
+                // 先 unmap 再说
+                page_table.unmap(vpn); // try this
+            }
+        }
+            page_table.map(vpn, ppn, perm);
+        
         vpn.step();
         phys_ppn += 1;
         start = vpn.into();
     }
 }
 /// unmap a virtual range
+#[allow(unused)]
 pub fn unmap_virt_range(token:usize,vpn_start:usize,vpn_end:usize){
     let mut page_table = PageTable::from_token(token);
     let mut vpn = VirtPageNum::from(vpn_start);

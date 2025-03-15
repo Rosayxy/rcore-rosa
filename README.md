@@ -112,11 +112,19 @@ page_table 里面的 translated_byte_buffer 可以以向量的形式返回一组
 判断哪些是用户可以访问的合法内存：拿 MapArea（从当前 task_control_block 中拿到）    
 TaskManager 里面 get_current_task_control_block；再从里面拿东西    
 
-sys_get_time 里面那个直接对用户态内存的写操作是非法的，用户传进来的是用户态的虚拟地址，这个地址在内核页表里没有映射，你需要软件把这个虚拟地址映射到内核地址空间中可访问的地址，看一下文档是哪个接口        
+sys_get_time 里面那个直接对用户态内存的写操作是非法的，用户传进来的是用户态的虚拟地址，这个地址在内核页表里没有映射，需要软件把这个虚拟地址**转换为物理地址**        
+
+trace read 中自己实现的 getranges 都是 vpn 的 range 可以注意一下    
 
 mmap: 如何找到一个空的物理页面：看 StackFrameAllocator 可以 frame_alloc 返回 FrameTracker，代表一个物理页帧      
+看一下 mmap 的实现，感觉可能有问题，咱们试一下不要直接 map 页表，而是用 memorySet 实现，参考 from_elf 实现，看起来它会自动给我们 map 上，直接用 insert_framed_area 吧     
+
 虚存映射：map/unmap: os/src/mm/page_table.rs 的 map/unmap（how can I get the right page table）    
 但是想一下怎么去找到一块大空间：看 current,end 够不够大，如果够大就直接分配出去，否则遍历 recycled 中的各项，找 current_end/recycled 中有没有连续的页，准备 implement 这里   
 munmap: 实现了 unmap_virt_range    
 
+看一下那个 memoryset 怎么说    
+
 注意一下那俩提示 目前可能没有增加 PTE_U，看一下这个需要怎么维护    
+
+TODO 问助教看是不是实现思路错了    

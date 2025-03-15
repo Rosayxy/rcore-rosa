@@ -37,6 +37,7 @@ lazy_static! {
 pub struct MemorySet {
     page_table: PageTable,
     areas: Vec<MapArea>,
+    mapped_areas: Vec<VirtPageNum>
 }
 
 impl MemorySet {
@@ -45,6 +46,7 @@ impl MemorySet {
         Self {
             page_table: PageTable::new(),
             areas: Vec::new(),
+            mapped_areas: Vec::new(),
         }
     }
     /// Get the page table token
@@ -67,6 +69,69 @@ impl MemorySet {
             None,
         );
     }
+    /// insert a framed area and mark it in mmaped_areas
+    pub fn insert_framed_area_mmap(
+        &mut self,
+        start_va: VirtAddr,
+        end_va: VirtAddr,
+        permission: MapPermission,
+    ) {
+        self.push(
+            MapArea::new(start_va, end_va, MapType::Framed, permission),
+            None,
+        );
+        for vpn in VPNRange::new(start_va.floor(), end_va.ceil()) {
+            self.mapped_areas.push(vpn);
+        }
+    }
+    /// unmap a range of virtual memory wtf??
+    /// TODO 问助教这个函数的思路是咋回事
+    pub fn remove_mmaped_areas(&mut self){
+        println!("in remove mmaped areas... {:?}",self.mapped_areas);
+        println!("self areas' len {}",self.areas.len());
+        let mut areas_new = Vec::new();
+        for area in self.areas.iter(){
+            println!(" get area start {:?}",area.vpn_range.get_start());
+            println!("is contains: {:?}",self.mapped_areas.contains(&area.vpn_range.get_start()));
+             if !self.mapped_areas.contains(&area.vpn_range.get_start()){
+                areas_new.push(area.clone()); // 因为这个 push 是不对的
+             }
+        }
+        // self.areas = areas_new;
+        println!("self areas's len after filtering {}",self.areas.len());
+        println!("remove mapped areas end");
+        for vpn in self.mapped_areas.iter(){
+            println!("unmapping: {:?}",vpn);
+            self.page_table.unmap(*vpn);
+        }
+        self.mapped_areas.clear();
+        
+    }
+    #[allow(unused)]
+    /// 在 insert_framed_area 基础上，如果该区域之前被 map 过就直接修改权限
+    pub fn insert_or_change_framed_area(
+        &mut self,
+        start_va: VirtAddr,
+        end_va: VirtAddr,
+        permission: MapPermission,
+    ) {
+        let mut found = false;
+        for area in self.areas.iter_mut() {
+            if area.vpn_range.get_start() == start_va.floor() && area.vpn_range.get_end() == end_va.ceil() {
+                area.vpn_range = VPNRange::new(start_va.floor(), end_va.ceil()); // change permissions
+                area.map_perm = permission;
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            self.push(
+                MapArea::new(start_va, end_va, MapType::Framed, permission),
+                None,
+            );
+        }
+    }
+    /// push
     fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
         map_area.map(&mut self.page_table);
         if let Some(data) = data {
@@ -268,6 +333,7 @@ impl MemorySet {
     }
 }
 /// map area structure, controls a contiguous piece of virtual memory
+#[derive(Clone)]
 pub struct MapArea {
     vpn_range: VPNRange,
     data_frames: BTreeMap<VirtPageNum, FrameTracker>,
