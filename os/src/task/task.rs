@@ -102,6 +102,10 @@ impl TaskControlBlock {
             None
         }
     }
+    /// insert a new frame into the task's memory set
+    pub fn insert_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr, permission: MapPermission) {
+        self.memory_set.insert_framed_area(start_va, end_va, permission);
+    }
 }
 
 #[derive(Copy, Clone, PartialEq)]

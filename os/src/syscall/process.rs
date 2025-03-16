@@ -1,6 +1,6 @@
 //! Process management syscalls
 use crate::{
-    config::PAGE_SIZE, mm::{page_table::unmap_virt_range, MapPermission, VirtAddr, VirtPageNum, KERNEL_SPACE}, task::{change_program_brk, current_user_token, exit_current_and_run_next, suspend_current_and_run_next}, timer::get_time_us, trace_array::read_from_array
+    config::PAGE_SIZE, mm::{page_table::unmap_virt_range, MapPermission, VirtAddr, VirtPageNum}, task::{change_program_brk, current_user_token, exit_current_and_run_next, insert_framed_area, suspend_current_and_run_next}, timer::get_time_us, trace_array::read_from_array
 };
 
 use super::get_trace_idx;
@@ -138,7 +138,8 @@ pub fn sys_mmap(_start: usize, _len: usize, _prot: usize) -> isize {
     let end = _start + ceiled_len;
     // insert in memory set 和 get_ranges 一样一层层加吧
     println!("mmap: {} {} {:?}",_start, end, map_permission);
-    KERNEL_SPACE.exclusive_access().insert_framed_area_mmap(VirtAddr(_start), VirtAddr(end),map_permission);
+    // get current task
+    insert_framed_area(VirtAddr(_start), VirtAddr(end), map_permission);
     0
 }
 

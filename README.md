@@ -119,6 +119,10 @@ trace read 中自己实现的 getranges 都是 vpn 的 range 可以注意一下
 mmap: 如何找到一个空的物理页面：看 StackFrameAllocator 可以 frame_alloc 返回 FrameTracker，代表一个物理页帧      
 看一下 mmap 的实现，感觉可能有问题，咱们试一下不要直接 map 页表，而是用 memorySet 实现，参考 from_elf 实现，看起来它会自动给我们 map 上，直接用 insert_framed_area 吧     
 
+mmap 实现 update: 先拿到当前的 task 然后用当前 task 的 memory_set 来 insert new frame 现在是在 TaskManager 里面写了新的接口    
+
+**TODO sys_mmap 看那个测例4 加检查 不然 kernel 会 panic 所以接下来就没办法测了**     
+
 虚存映射：map/unmap: os/src/mm/page_table.rs 的 map/unmap（how can I get the right page table）    
 但是想一下怎么去找到一块大空间：看 current,end 够不够大，如果够大就直接分配出去，否则遍历 recycled 中的各项，找 current_end/recycled 中有没有连续的页，准备 implement 这里   
 munmap: 实现了 unmap_virt_range    

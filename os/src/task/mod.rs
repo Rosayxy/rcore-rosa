@@ -15,7 +15,7 @@ mod switch;
 mod task;
 
 use crate::loader::{get_app_data, get_num_app};
-use crate::mm::{MapPermission, KERNEL_SPACE};
+use crate::mm::{MapPermission, KERNEL_SPACE,VirtAddr};
 use crate::sync::UPSafeCell;
 use crate::trap::TrapContext;
 use alloc::vec::Vec;
@@ -158,6 +158,18 @@ impl TaskManager {
             panic!("All applications completed!");
         }
     }
+
+    /// insert new frame into current task
+    pub fn insert_framed_area(
+        &self,
+        start_va: VirtAddr,
+        end_va: VirtAddr,
+        permission: MapPermission,
+    ) {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].insert_framed_area(start_va, end_va, permission); 
+    }
 }
 
 /// Run the first task in task list.
@@ -213,4 +225,13 @@ pub fn change_program_brk(size: i32) -> Option<usize> {
 /// get the elf ranges
 pub fn get_ranges()->Vec<(usize,usize,MapPermission)>{
     TASK_MANAGER.get_ranges()
+}
+
+/// insert new frame into current task
+pub fn insert_framed_area(
+    start_va: VirtAddr,
+    end_va: VirtAddr,
+    permission: MapPermission,
+) {
+    TASK_MANAGER.insert_framed_area(start_va, end_va, permission);
 }

@@ -87,25 +87,24 @@ impl MemorySet {
     /// unmap a range of virtual memory wtf??
     /// TODO 问助教这个函数的思路是咋回事
     pub fn remove_mmaped_areas(&mut self){
-        println!("in remove mmaped areas... {:?}",self.mapped_areas);
-        println!("self areas' len {}",self.areas.len());
-        let mut areas_new = Vec::new();
-        for area in self.areas.iter(){
-            println!(" get area start {:?}",area.vpn_range.get_start());
-            println!("is contains: {:?}",self.mapped_areas.contains(&area.vpn_range.get_start()));
-             if !self.mapped_areas.contains(&area.vpn_range.get_start()){
-                areas_new.push(area.clone()); // 因为这个 push 是不对的
-             }
-        }
-        // self.areas = areas_new;
-        println!("self areas's len after filtering {}",self.areas.len());
-        println!("remove mapped areas end");
-        for vpn in self.mapped_areas.iter(){
-            println!("unmapping: {:?}",vpn);
-            self.page_table.unmap(*vpn);
-        }
-        self.mapped_areas.clear();
-        
+        // println!("in remove mmaped areas... {:?}",self.mapped_areas);
+        // println!("self areas' len {}",self.areas.len());
+        // let mut areas_new = Vec::new();
+        // for area in self.areas.iter(){
+        //     println!(" get area start {:?}",area.vpn_range.get_start());
+        //     println!("is contains: {:?}",self.mapped_areas.contains(&area.vpn_range.get_start()));
+        //      if !self.mapped_areas.contains(&area.vpn_range.get_start()){
+        //         areas_new.push(area.clone()); // 因为这个 push 是不对的
+        //      }
+        // }
+        // // self.areas = areas_new;
+        // println!("self areas's len after filtering {}",self.areas.len());
+        // println!("remove mapped areas end");
+        // for vpn in self.mapped_areas.iter(){
+        //     println!("unmapping: {:?}",vpn);
+        //     self.page_table.unmap(*vpn);
+        // }
+        // self.mapped_areas.clear();
     }
     #[allow(unused)]
     /// 在 insert_framed_area 基础上，如果该区域之前被 map 过就直接修改权限
