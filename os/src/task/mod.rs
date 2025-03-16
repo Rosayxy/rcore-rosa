@@ -15,7 +15,7 @@ mod switch;
 mod task;
 
 use crate::loader::{get_app_data, get_num_app};
-use crate::mm::{MapPermission, KERNEL_SPACE,VirtAddr};
+use crate::mm::{MapPermission, VirtAddr};
 use crate::sync::UPSafeCell;
 use crate::trap::TrapContext;
 use alloc::vec::Vec;
@@ -170,6 +170,18 @@ impl TaskManager {
         let current = inner.current_task;
         inner.tasks[current].insert_framed_area(start_va, end_va, permission); 
     }
+    /// get current user section ranges
+    pub fn get_current_ranges(&self)->Vec<(usize,usize,MapPermission)>{
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].memory_set.get_ranges()
+    }
+    /// unmap an area
+    pub fn unmap_framed_area(&self,start_va: VirtAddr, end_va: VirtAddr){
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].unmap_framed_area(start_va, end_va);
+        
+    }
 }
 
 /// Run the first task in task list.
@@ -202,7 +214,6 @@ pub fn suspend_current_and_run_next() {
 /// Exit the current 'Running' task and run the next task in task list.
 pub fn exit_current_and_run_next() {
     zero_out_array();
-    KERNEL_SPACE.exclusive_access().remove_mmaped_areas();
     mark_current_exited();
     run_next_task();
 }
@@ -234,4 +245,12 @@ pub fn insert_framed_area(
     permission: MapPermission,
 ) {
     TASK_MANAGER.insert_framed_area(start_va, end_va, permission);
+}
+/// get current user section ranges
+pub fn get_current_ranges()->Vec<(usize,usize,MapPermission)>{
+    TASK_MANAGER.get_current_ranges()
+}
+/// unmap an area
+pub fn unmap_framed_area(start_va: VirtAddr, end_va: VirtAddr){
+    TASK_MANAGER.unmap_framed_area(start_va, end_va);
 }

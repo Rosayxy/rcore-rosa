@@ -106,6 +106,10 @@ impl TaskControlBlock {
     pub fn insert_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr, permission: MapPermission) {
         self.memory_set.insert_framed_area(start_va, end_va, permission);
     }
+    /// unmap a frame from the task's memory set
+    pub fn unmap_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr) {
+        self.memory_set.unmap_framed_area(start_va, end_va);
+    }
 }
 
 #[derive(Copy, Clone, PartialEq)]

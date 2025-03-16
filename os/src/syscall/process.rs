@@ -1,6 +1,6 @@
 //! Process management syscalls
 use crate::{
-    config::PAGE_SIZE, mm::{page_table::unmap_virt_range, MapPermission, VirtAddr, VirtPageNum}, task::{change_program_brk, current_user_token, exit_current_and_run_next, insert_framed_area, suspend_current_and_run_next}, timer::get_time_us, trace_array::read_from_array
+    config::PAGE_SIZE, mm::{MapPermission, VirtAddr, VirtPageNum}, task::{change_program_brk, current_user_token, exit_current_and_run_next, get_current_ranges, insert_framed_area, suspend_current_and_run_next, unmap_framed_area}, timer::get_time_us, trace_array::read_from_array
 };
 
 use super::get_trace_idx;
@@ -121,8 +121,20 @@ pub fn sys_mmap(_start: usize, _len: usize, _prot: usize) -> isize {
     }
     if (_prot & !0x7 != 0) || (_prot & 0x7 == 0){
         return -1;
-    } 
+    }
     let ceiled_len = (_len + PAGE_SIZE - 1) / PAGE_SIZE * PAGE_SIZE;
+    // check if mapped
+    let ranges = get_current_ranges();
+    for range in ranges.iter(){
+        if range.0 <= _start/PAGE_SIZE && _start/PAGE_SIZE < range.1{
+            return -1;
+        }
+        // check end of range
+        if range.0 < (_start + ceiled_len)/PAGE_SIZE && (_start + ceiled_len)/PAGE_SIZE <= range.1{
+            return -1;
+        }
+    }
+    
     // create mapping
     //  TODO if the address is mapped, check its length and prot, change the prot if needed, using the get_ranges
     let mut map_permission = MapPermission::U;
@@ -148,9 +160,21 @@ pub fn sys_munmap(_start: usize, _len: usize) -> isize {
     if _start % PAGE_SIZE != 0 {
         return -1;
     }
-    let vpn_start = _start / PAGE_SIZE;
-    let vpn_end = (_start + _len + PAGE_SIZE - 1) / PAGE_SIZE;
-    unmap_virt_range(current_user_token(), vpn_start, vpn_end);
+    let ceiled_len = (_len + PAGE_SIZE - 1) / PAGE_SIZE * PAGE_SIZE;
+    let end = _start + ceiled_len;
+    // check unmap ranges must be legal
+    let ranges = get_current_ranges();
+    let mut is_legal = false;
+    for range in ranges.iter(){
+        if range.0 == _start/PAGE_SIZE && range.1 == end/PAGE_SIZE{
+            is_legal = true;
+            break;
+        }
+    }
+    if !is_legal{
+        return -1;
+    }
+    unmap_framed_area(VirtAddr(_start), VirtAddr(end));
     return 0;
 }
 /// change data segment size
