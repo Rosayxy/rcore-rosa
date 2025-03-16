@@ -149,7 +149,7 @@ pub fn sys_mmap(_start: usize, _len: usize, _prot: usize) -> isize {
     }
     let end = _start + ceiled_len;
     // insert in memory set 和 get_ranges 一样一层层加吧
-    println!("mmap: {} {} {:?}",_start, end, map_permission);
+    // println!("mmap: {} {} {:?}",_start, end, map_permission);
     // get current task
     insert_framed_area(VirtAddr(_start), VirtAddr(end), map_permission);
     0
