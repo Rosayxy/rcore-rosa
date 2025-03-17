@@ -105,6 +105,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         -2
     }
     // ---- release current PCB automatically
+}
 pub fn virt_to_phys(virt:usize)->*mut u8{
     let vpn = virt/PAGE_SIZE;
     let token = current_user_token();

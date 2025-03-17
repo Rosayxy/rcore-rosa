@@ -2,8 +2,6 @@
 use super::{frame_alloc, FrameTracker, PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use alloc::string::String;
 
-use crate::config::PAGE_SIZE;
-
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
