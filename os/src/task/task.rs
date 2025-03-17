@@ -1,4 +1,8 @@
 //! Types related to task management
+<<<<<<< HEAD
+=======
+use alloc::vec::Vec;
+>>>>>>> a7f06d1 (Squashed commit of the following:)
 
 use super::TaskContext;
 use super::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
@@ -103,8 +107,12 @@ impl TaskControlBlock {
     /// At present, it is only used for the creation of initproc
     /// get the mapping ranges of an elf
     pub fn get_ranges(&self) -> Vec<(usize,usize,MapPermission)> {
+<<<<<<< HEAD
         let inner = self.inner_exclusive_access();
         inner.memory_set.get_ranges()
+=======
+        self.memory_set.get_ranges()
+>>>>>>> a7f06d1 (Squashed commit of the following:)
     }
     /// Based on the elf info in program, build the contents of task in a new address space
     pub fn new(elf_data: &[u8]) -> Self {
