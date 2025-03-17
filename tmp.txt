@@ -1,0 +1,131 @@
+[kernel] PageFault in application, bad addr = 0x0, bad instruction = 0x3a4, kernel killed it.
+[kernel] IllegalInstruction in application, kernel killed it.
+[kernel] IllegalInstruction in application, kernel killed it.
+Hello, world from user mode program!
+power_3 [10000/200000]
+power_3 [20000/200000]
+power_3 [30000/200000]
+power_3 [40000/200000]
+power_3 [50000/200000]
+power_3 [60000/200000]
+power_3 [70000/200000]
+power_3 [80000/200000]
+power_3 [90000/200000]
+power_3 [100000/200000]
+power_3 [110000/200000]
+power_3 [120000/200000]
+power_3 [130000/200000]
+power_3 [140000/200000]
+power_3 [150000/200000]
+power_3 [160000/200000]
+power_3 [170000/200000]
+power_3 [180000/200000]
+power_3 [190000/200000]
+power_3 [200000/200000]
+3^200000 = 871008973(MOD 998244353)
+Test power_3 OK576314502!
+power_7 [10000/160000]
+power_7 [20000/160000]
+power_7 [30000/160000]
+power_7 [40000/160000]
+power_7 [50000/160000]
+power_7 [60000/160000]
+power_7 [70000/160000]
+power_7 [80000/160000]
+power_7 [90000/160000]
+power_7 [100000/160000]
+power_7 [110000/160000]
+power_7 [120000/160000]
+power_7 [130000/160000]
+power_7 [140000/160000]
+power_7 [150000/160000]
+power_7 [160000/160000]
+7^160000 = 667897727(MOD 998244353)
+Test power_7 OK576314502!
+get_time OK576314502! 40
+current time_msec = 41
+AAAAAAAAAA [1/5]
+BBBBBBBBBB [1/5]
+CCCCCCCCCC [1/5]
+[kernel] PageFault in application, bad addr = 0x10000000, bad instruction = 0x474, kernel killed it.
+[kernel] PageFault in application, bad addr = 0x10000000, bad instruction = 0x42e, kernel killed it.
+[kernel] PageFault in application, bad addr = 0x10000000, bad instruction = 0x42c, kernel killed it.
+Test 04_4 test OK576314502!
+Panicked at src/bin/ch4_trace1.rs:28, assertion failed: None != trace_read(start as *const u8)
+Panicked at src/bin/ch4_unmap.rs:18, assertion `left == right` failed
+Panicked at src/bin/ch4_unmap2.rs:18, assertion `left == right` failed
+  left: 0
+ right: -1
+Test sbrk start.
+origin break point = c000
+one page allocated,  break point = d000
+try write to allocated page
+write ok
+10 page allocated,  break point = 17000
+11 page DEALLOCATED,  break point = c000
+try DEALLOCATED more one page, should be failed.
+Test sbrk almost OK576314502!
+now write to deallocated page, should cause page fault.
+[kernel] PageFault in application, bad addr = 0xc000, bad instruction = 0x5c0, kernel killed it.
+power_5 [10000/140000]
+power_5 [20000/140000]
+power_5 [30000/140000]
+power_5 [40000/140000]
+power_5 [50000/140000]
+power_5 [60000/140000]
+power_5 [70000/140000]
+power_5 [80000/140000]
+power_5 [90000/140000]
+power_5 [100000/140000]
+power_5 [110000/140000]
+power_5 [120000/140000]
+power_5 [130000/140000]
+power_5 [140000/140000]
+5^140000 = 386471875(MOD 998244353)
+Test power_5 OK576314502!
+AAAAAAAAAA [2/5]
+BBBBBBBBBB [2/5]
+CCCCCCCCCC [2/5]
+  left: 0
+ right: -1
+AAAAAAAAAA [3/5]
+BBBBBBBBBB [3/5]
+CCCCCCCCCC [3/5]
+AAAAAAAAAA [4/5]
+BBBBBBBBBB [4/5]
+CCCCCCCCCC [4/5]
+AAAAAAAAAA [5/5]
+BBBBBBBBBB [5/5]
+CCCCCCCCCC [5/5]
+Test write A OK576314502!
+Test write B OK576314502!
+Test write C OK576314502!
+time_msec = 142 after sleeping 100 ticks, delta = 101ms!
+Test sleep1 passed576314502!
+string from task trace test
+
+Test trace OK576314502!
+Test sleep OK576314502!
+[kernel] Panicked at src/task/mod.rs:159 All applications completed!
+make[1]: Leaving directory '/mnt/d/coderyxy4/labs-2022010841/os'
+python3 check/ch4.py < stdout-ch4 || (\
+        make restore ; \
+        exit 1 ; \
+)
+['get_time OK576314502! (\\d+)', 'Test sleep OK576314502!', 'current time_msec = (\\d+)', 'time_msec = (\\d+) after sleeping (\\d+) ticks, delta = (\\d+)ms!', 'Test sleep1 passed576314502!', 'string from task trace test', 'Test trace OK576314502!', 'Test 04_1 OK576314502!', 'Test 04_4 test OK576314502!', 'Test 04_5 ummap OK576314502!', 'Test 04_6 ummap2 OK576314502!', 'Test trace_1 OK576314502!'] ['FAIL: T.T', 'Test sbrk failed!', 'Should cause error, Test 04_2 fail!', 'Should cause error, Test 04_3 fail!']
+[PASS] found <get_time OK576314502! (\d+)>
+[PASS] found <Test sleep OK576314502!>
+[PASS] found <current time_msec = (\d+)>
+[PASS] found <time_msec = (\d+) after sleeping (\d+) ticks, delta = (\d+)ms!>
+[PASS] found <Test sleep1 passed576314502!>
+[PASS] found <string from task trace test>
+[PASS] found <Test trace OK576314502!>
+[FAIL] not found <Test 04_1 OK576314502!>
+[PASS] found <Test 04_4 test OK576314502!>
+[FAIL] not found <Test 04_5 ummap OK576314502!>
+[FAIL] not found <Test 04_6 ummap2 OK576314502!>
+[FAIL] not found <Test trace_1 OK576314502!>
+[PASS] not found <FAIL: T.T>
+[PASS] not found <Test sbrk failed!>
+[PASS] not found <Should cause error, Test 04_2 fail!>
+[PASS] not found <Should cause error, Test 04_3 fail!>

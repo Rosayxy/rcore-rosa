@@ -23,6 +23,12 @@ mod task;
 
 use crate::loader::get_app_data_by_name;
 use alloc::sync::Arc;
+use crate::loader::{get_app_data, get_num_app};
+use crate::mm::{MapPermission, VirtAddr};
+use crate::sync::UPSafeCell;
+use crate::trap::TrapContext;
+use alloc::vec::Vec;
+use crate::trace_array::zero_out_array;
 use lazy_static::*;
 pub use manager::{fetch_task, TaskManager};
 use switch::__switch;
@@ -114,4 +120,26 @@ lazy_static! {
 ///Add init process to the manager
 pub fn add_initproc() {
     add_task(INITPROC.clone());
+}
+
+/// get the elf ranges
+pub fn get_ranges()->Vec<(usize,usize,MapPermission)>{
+    TASK_MANAGER.get_ranges()
+}
+
+/// insert new frame into current task
+pub fn insert_framed_area(
+    start_va: VirtAddr,
+    end_va: VirtAddr,
+    permission: MapPermission,
+) {
+    TASK_MANAGER.insert_framed_area(start_va, end_va, permission);
+}
+/// get current user section ranges
+pub fn get_current_ranges()->Vec<(usize,usize,MapPermission)>{
+    TASK_MANAGER.get_current_ranges()
+}
+/// unmap an area
+pub fn unmap_framed_area(start_va: VirtAddr, end_va: VirtAddr){
+    TASK_MANAGER.unmap_framed_area(start_va, end_va);
 }

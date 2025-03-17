@@ -37,14 +37,35 @@ const SYSCALL_MMAP: usize = 222;
 const SYSCALL_WAITPID: usize = 260;
 /// spawn syscall
 const SYSCALL_SPAWN: usize = 400;
+/// syscall trace
+const SYSCALL_TRACE: usize = 410;
 
 mod fs;
 mod process;
 
 use fs::*;
 use process::*;
+
+use crate::trace_array::incl_array;
+
+/// get the index of the trace
+pub fn get_trace_idx(ty: usize) -> usize {
+    match ty {
+        SYSCALL_WRITE => 0,
+        SYSCALL_EXIT => 1,
+        SYSCALL_YIELD => 2,
+        SYSCALL_GET_TIME => 3,
+        SYSCALL_TRACE => 4,
+        SYSCALL_SBRK => 5,
+        SYSCALL_MMAP => 6,
+        SYSCALL_MUNMAP => 7,
+        _ => panic!("Unsupported trace type: {}", ty),
+    }
+}
+
 /// handle syscall exception with `syscall_id` and other arguments
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
+    incl_array(get_trace_idx(syscall_id)).unwrap();
     match syscall_id {
         SYSCALL_READ => sys_read(args[0], args[1] as *const u8, args[2]),
         SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),

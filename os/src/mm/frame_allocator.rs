@@ -8,6 +8,7 @@ use core::fmt::{self, Debug, Formatter};
 use lazy_static::*;
 
 /// tracker for physical page frame allocation and deallocation
+#[derive(Clone)]
 pub struct FrameTracker {
     /// physical page number
     pub ppn: PhysPageNum,
@@ -41,6 +42,7 @@ trait FrameAllocator {
     fn new() -> Self;
     fn alloc(&mut self) -> Option<PhysPageNum>;
     fn dealloc(&mut self, ppn: PhysPageNum);
+    fn alloc_size(&mut self, nums: usize)->Option<PhysPageNum>;
 }
 /// an implementation for frame allocator
 pub struct StackFrameAllocator {
@@ -50,6 +52,7 @@ pub struct StackFrameAllocator {
 }
 
 impl StackFrameAllocator {
+    /// initing stacck frame allocator
     pub fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
         self.current = l.0;
         self.end = r.0;
@@ -83,6 +86,21 @@ impl FrameAllocator for StackFrameAllocator {
         // recycle
         self.recycled.push(ppn);
     }
+    /// todo alloc size
+    fn alloc_size(&mut self, nums: usize)->Option<PhysPageNum>{
+        // check if directly allocable
+        if nums == 1{
+            return self.alloc();
+        }
+        if self.end - self.current >= nums {
+            let ppn = self.current;
+            self.current += nums;
+            Some(ppn.into())
+        } else {
+            None
+        }
+
+    }
 }
 
 type FrameAllocatorImpl = StackFrameAllocator;
@@ -114,6 +132,14 @@ pub fn frame_alloc() -> Option<FrameTracker> {
 /// Deallocate a physical page frame with a given ppn
 pub fn frame_dealloc(ppn: PhysPageNum) {
     FRAME_ALLOCATOR.exclusive_access().dealloc(ppn);
+}
+/// alloc size and return the ppn
+pub fn frame_alloc_size(nums: usize)->Option<usize>{
+    if let Some(ppn) = FRAME_ALLOCATOR.exclusive_access().alloc_size(nums){
+        Some(ppn.0)
+    }else{
+        None
+    }
 }
 
 #[allow(unused)]
