@@ -400,6 +400,7 @@ impl MapArea {
             map_perm,
         }
     }
+    /// from another
     pub fn from_another(another: &Self) -> Self {
         Self {
             vpn_range: VPNRange::new(another.vpn_range.get_start(), another.vpn_range.get_end()),
@@ -408,6 +409,7 @@ impl MapArea {
             map_perm: another.map_perm,
         }
     }
+    /// mapping one vpn in page table
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         let ppn: PhysPageNum;
         match self.map_type {

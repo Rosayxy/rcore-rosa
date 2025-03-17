@@ -11,7 +11,8 @@ use crate::sync::UPSafeCell;
 use crate::trap::TrapContext;
 use alloc::sync::Arc;
 use lazy_static::*;
-
+use alloc::vec::Vec;
+use crate::mm::{MapPermission, VirtAddr};
 /// Processor management structure
 pub struct Processor {
     ///The task currently executing on the current processor
@@ -43,6 +44,27 @@ impl Processor {
     ///Get current task in cloning semanteme
     pub fn current(&self) -> Option<Arc<TaskControlBlock>> {
         self.current.as_ref().map(Arc::clone)
+    }
+
+    /// get current section ranges
+    pub fn get_current_ranges(&self)->Vec<(usize,usize,MapPermission)>{
+        if let Some(task) = self.current.as_ref() {
+            task.inner_exclusive_access().memory_set.get_ranges()
+        }else{
+            Vec::new()
+        }
+    }
+    /// insert frame
+    pub fn insert_framed_area(&mut self, start: VirtAddr, end: VirtAddr, permission: MapPermission) {
+        if let Some(task) = self.current.as_ref() {
+            task.inner_exclusive_access().memory_set.insert_framed_area(start, end, permission);
+        }
+    }
+    /// unmap frame
+    pub fn unmap_framed_area(&mut self, start: VirtAddr, end: VirtAddr) {
+        if let Some(task) = self.current.as_ref() {
+            task.inner_exclusive_access().memory_set.unmap_framed_area(start, end);
+        }
     }
 }
 
