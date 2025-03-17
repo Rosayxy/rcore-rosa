@@ -1,4 +1,6 @@
-//! Types related to task management & Functions for completely changing TCB
+//! Types related to task management
+use alloc::vec::Vec;
+
 use super::TaskContext;
 use super::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 use crate::config::TRAP_CONTEXT_BASE;
@@ -100,6 +102,11 @@ impl TaskControlBlock {
     /// Create a new process
     ///
     /// At present, it is only used for the creation of initproc
+    /// get the mapping ranges of an elf
+    pub fn get_ranges(&self) -> Vec<(usize,usize,MapPermission)> {
+        self.memory_set.get_ranges()
+    }
+    /// Based on the elf info in program, build the contents of task in a new address space
     pub fn new(elf_data: &[u8]) -> Self {
         // memory_set with elf program headers/trampoline/trap context/user stack
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
@@ -260,6 +267,14 @@ impl TaskControlBlock {
         } else {
             None
         }
+    }
+    /// insert a new frame into the task's memory set
+    pub fn insert_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr, permission: MapPermission) {
+        self.memory_set.insert_framed_area(start_va, end_va, permission);
+    }
+    /// unmap a frame from the task's memory set
+    pub fn unmap_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr) {
+        self.memory_set.unmap_framed_area(start_va, end_va);
     }
 }
 

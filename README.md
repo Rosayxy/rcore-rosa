@@ -49,3 +49,87 @@ $ git clone https://github.com/LearningOS/rCore-Tutorial-Test-2025S.git ci-user/
 $ cd ci-user && make test CHAPTER=$ID
 ```
 Notice: $ID is from [3,4,5,6,8]
+
+## notes
+实现虚存     
+
+### SV39
+satp 寄存器会 enable 虚拟地址和 mmu mapping    
+mode 设置为 8 时，SV39 分页机制被启用，所有 S/U 特权级的访存被视为一个 39 位的虚拟地址     
+地址格式和组成：看计组，virtual addr 39 bits physical addr 56 bits     
+
+### 地址空间抽象
+```rs
+pub struct MapArea {
+    vpn_range: VPNRange,
+    data_frames: BTreeMap<VirtPageNum, FrameTracker>,
+    map_type: MapType,
+    map_perm: MapPermission,
+}
+
+```
+描述一段虚拟空间    
+MapType 分别有 Identical 和 Framed，分别表示恒等映射（启用多级页表之后仍能够访问一个特定的物理地址指向的物理内存），Frame 把每个虚拟页面映射到新的物理栈帧     
+
+frame allocator    
+每个 Frame 表示一个物理页帧     
+对于这里的 StackFrameAllocator，
+```rs
+pub struct StackFrameAllocator {
+    current: usize,
+    end: usize,
+    recycled: Vec<usize>,
+}
+
+```
+物理页号区间 `[current,end)` 此前均从未被分配出去过，而向量 recycled 以后入先出的方式保存了被回收的物理页号     
+
+内核和应用的地址空间：这块看文档吧，感觉讲的挺清楚的     
+
+基于地址空间的分时多任务：     
+建立并开启基于分页模式的虚拟地址空间：    
+sbi 初始化之后，cpu 跳转到内核入口点并在 S mode 上执行，开启分页模式之后，内核的代码在访存的时候只能看到内核地址空间，此时每次访存将被视为一个虚拟地址且需要通过 MMU 基于内核地址空间的多级页表的地址转换。是否使用分页模式的转换发生在内核初始化期间     
+
+那个 page table token 是会按照 satp CSR 格式要求 构造一个无符号 64 位无符号整数，使得其分页模式为 SV39 ，且将当前多级页表的根节点所在的物理页号填充进去     
+在 activate 中，我们将这个值写入当前 CPU 的 satp CSR ，从这一刻开始 SV39 分页模式就被启用了    
+
+跳板：无论是内核还是用户的地址空间，最高的虚拟页面都是一个跳板，用户地址空间的次高虚拟页面是来设置存放应用 Trap 的上下文     
+为什么需要跳板：应用 Trap 到内核的时候，sscratch 指出了内核栈的栈顶，用一条指令可以由用户栈切换到内核栈，然后直接将 Trap 上下文压入内核栈栈顶。当 Trap 处理完毕返回用户态的时候，将 Trap 上下文中的内容恢复到寄存器上，最后将保存着应用用户栈顶的 sscratch 与 sp 进行交换，也就从内核栈切换回了用户栈    
+
+使能了分页机制之后，我们需要在这个过程同时完成地址空间的切换，当 __alltraps 保存 Trap 上下文的时候，我们必须通过修改 satp 从应用地址空间切换到内核地址空间，__restore 同理，地址空间的切换不能影响指令的连续执行，这就要求应用和内核地址空间在切换地址空间指令附近是平滑的，所以才有了 Trampoline      
+
+在之前我们看到了 TrapContext, 这里我们在 Trap 上下文中包含更多内容，包括 kernel_satp，kernel_sp, trap_handler     
+
+trampoline: 看文档吧    
+
+加载和执行应用程序：   
+扩展应用控制块：多了 memory_set，trap_cx_ppn，base_size 三个字段     
+因为 Trap 上下文不在内核地址空间，所以调用 current_trap_cx 来获取当前应用的 Trap 上下文的可变引用    
+
+sys_write: 需要手动查页表才能知道，哪些数据被放置在哪些物理页帧上并进行访问     
+page_table 里面的 translated_byte_buffer 可以以向量的形式返回一组可以在内核空间中直接访问的字节数组切片，可能在大作业中需要用到     
+
+作业：如何判断地址用户不可读：
+判断哪些是用户可以访问的合法内存：拿 MapArea（从当前 task_control_block 中拿到）    
+TaskManager 里面 get_current_task_control_block；再从里面拿东西    
+
+sys_get_time 里面那个直接对用户态内存的写操作是非法的，用户传进来的是用户态的虚拟地址，这个地址在内核页表里没有映射，需要软件把这个虚拟地址**转换为物理地址**        
+
+trace read 中自己实现的 getranges 都是 vpn 的 range 可以注意一下    
+
+mmap: 如何找到一个空的物理页面：看 StackFrameAllocator 可以 frame_alloc 返回 FrameTracker，代表一个物理页帧      
+看一下 mmap 的实现，感觉可能有问题，咱们试一下不要直接 map 页表，而是用 memorySet 实现，参考 from_elf 实现，看起来它会自动给我们 map 上，直接用 insert_framed_area 吧     
+
+mmap 实现 update: 先拿到当前的 task 然后用当前 task 的 memory_set 来 insert new frame 现在是在 TaskManager 里面写了新的接口    
+
+**(done) sys_mmap 看那个测例4 加检查 不然 kernel 会 panic 所以接下来就没办法测了**     
+
+虚存映射：map/unmap: os/src/mm/page_table.rs 的 map/unmap（how can I get the right page table）    
+但是想一下怎么去找到一块大空间：看 current,end 够不够大，如果够大就直接分配出去，否则遍历 recycled 中的各项，找 current_end/recycled 中有没有连续的页，准备 implement 这里   
+munmap: 实现了 unmap_virt_range    
+
+看一下那个 memoryset 怎么说    
+
+注意一下那俩提示 目前可能没有增加 PTE_U，看一下这个需要怎么维护    
+
+TODO 问助教看是不是实现思路错了    

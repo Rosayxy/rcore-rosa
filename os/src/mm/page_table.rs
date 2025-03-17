@@ -1,6 +1,9 @@
 //! Implementation of [`PageTableEntry`] and [`PageTable`].
 use super::{frame_alloc, FrameTracker, PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use alloc::string::String;
+
+use crate::config::PAGE_SIZE;
+
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
@@ -19,7 +22,7 @@ bitflags! {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone,Debug)]
 #[repr(C)]
 /// page table entry structure
 pub struct PageTableEntry {
@@ -129,7 +132,7 @@ impl PageTable {
     #[allow(unused)]
     pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
         let pte = self.find_pte_create(vpn).unwrap();
-        assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
+        assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping, pte {:?}", vpn,pte);
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
     /// remove the map between virtual page number and physical page number
