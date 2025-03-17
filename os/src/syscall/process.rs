@@ -10,7 +10,7 @@ use crate::{
     },
 };
 use crate::{
-    config::PAGE_SIZE, mm::{MapPermission, VirtAddr, VirtPageNum}, task::{change_program_brk, get_current_ranges, insert_framed_area, unmap_framed_area}, timer::get_time_us, trace_array::read_from_array
+    config::PAGE_SIZE, mm::{MapPermission, VirtAddr, VirtPageNum}, task::{get_current_ranges, insert_framed_area, unmap_framed_area}, timer::get_time_us, trace_array::read_from_array
 };
 
 use super::get_trace_idx;
@@ -105,6 +105,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         -2
     }
     // ---- release current PCB automatically
+}
 pub fn virt_to_phys(virt:usize)->*mut u8{
     let vpn = virt/PAGE_SIZE;
     let token = current_user_token();

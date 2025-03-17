@@ -13,10 +13,13 @@ static mut GLOBAL_ARRAY_TRACE: [AtomicIsize; 8] = [
 ];
 /// writing to the global array
 pub fn write_to_array(index: usize, value: isize) -> Result<(), &'static str> {
-    if index >= 8 {
+    if index > 8 {
         return Err("Index out of bounds");
     }
-    
+    if index == 8{
+        // 其他 syscall 不管了
+        return Ok(());
+    }
     // Safety: We're using atomic operations, so this is thread-safe
     unsafe {
         GLOBAL_ARRAY_TRACE[index].store(value, Ordering::SeqCst);
@@ -37,8 +40,12 @@ pub fn read_from_array(index: usize) -> Result<isize, &'static str> {
 }
 /// incline the value in the array
 pub fn incl_array(index:usize) -> Result<(), &'static str>{
-    if index >= 8 {
+    if index > 8 {
         return Err("Index out of bounds");
+    }
+    if index == 8{
+        // 其他 syscall 不管了
+        return Ok(());
     }
     unsafe {
         GLOBAL_ARRAY_TRACE[index].fetch_add(1, Ordering::SeqCst);
