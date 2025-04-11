@@ -45,7 +45,8 @@ pub fn virt_to_phys(virt:usize)->*mut u8{
 pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
     trace!("kernel: sys_get_time");
     let us = get_time_us();
-    // convert the address to physical address
+    // convert the address to physical address 这一步是需要的，因为内核页表无法找到 ts (用户态虚拟地址)
+    // [honor code] 关于这步转换的必要性和郝子胥学长做过交流
     let vpn = ts as usize / PAGE_SIZE;
     let token = current_user_token();
     let page_table = crate::mm::page_table::PageTable::from_token(token);
