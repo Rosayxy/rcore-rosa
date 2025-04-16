@@ -66,6 +66,7 @@ pub fn get_trace_idx(ty: usize) -> usize {
 
 /// handle syscall exception with `syscall_id` and other arguments
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
+    // trace!("kernel:pid[{}] syscall: {}", current_task().unwrap().pid.0, syscall_id);
     incl_array(get_trace_idx(syscall_id)).unwrap();
     match syscall_id {
         SYSCALL_READ => sys_read(args[0], args[1] as *const u8, args[2]),
