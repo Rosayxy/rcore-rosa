@@ -135,3 +135,5 @@ stride 调度：TODO 写的时候施工吧
 可能大概看到了
 
 spawn：先在 sys_fork 基础上魔改吧，sys_fork 是创建一个新的 TaskControlBlock 然后塞到 scheduler 里面，sys_exec 是把当前 task 的地址空间改了，所以整体式套 sys_fork 的框架然后在创建 new_task 的时候把地址空间给换了   
+
+todo 改 TaskManager 的 fetch   

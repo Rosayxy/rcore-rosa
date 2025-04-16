@@ -2,8 +2,8 @@
 
 use super::TaskContext;
 use super::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
-use crate::config::TRAP_CONTEXT_BASE;
 use crate::fs::{File, Stdin, Stdout};
+use crate::config::{BIG_STRIDE_NUM, INIT_PRIORITY, TRAP_CONTEXT_BASE};
 use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPSafeCell;
 use crate::trap::{trap_handler, TrapContext};
@@ -72,6 +72,15 @@ pub struct TaskControlBlockInner {
 
     /// Program break
     pub program_brk: usize,
+
+    /// the stride used in the scheduling algorithm
+    pub stride: usize,
+
+    /// the pass used in the scheduling algorithm
+    pub pass: usize,
+
+    /// the priority used in the scheduling algorithm
+    pub priority: usize,
 }
 
 impl TaskControlBlockInner {
@@ -142,6 +151,9 @@ impl TaskControlBlock {
                     ],
                     heap_bottom: user_sp,
                     program_brk: user_sp,
+                    stride: 0,
+                    pass: BIG_STRIDE_NUM/INIT_PRIORITY,
+                    priority: INIT_PRIORITY,
                 })
             },
         };
@@ -223,6 +235,9 @@ impl TaskControlBlock {
                     fd_table: new_fd_table,
                     heap_bottom: parent_inner.heap_bottom,
                     program_brk: parent_inner.program_brk,
+                    stride: 0,
+                    pass: BIG_STRIDE_NUM/parent_inner.priority,
+                    priority: parent_inner.priority,
                 })
             },
         });
@@ -270,6 +285,9 @@ impl TaskControlBlock {
                     exit_code: 0,
                     heap_bottom: parent_inner.heap_bottom,
                     program_brk: parent_inner.program_brk,
+                    stride: 0,
+                    pass: BIG_STRIDE_NUM/parent_inner.priority,
+                    priority: parent_inner.priority,
                 })
             },
         });

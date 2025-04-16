@@ -1,12 +1,14 @@
 //!Implementation of [`TaskManager`]
-use super::TaskControlBlock;
+use super::{TaskControlBlock, TaskStatus};
+use crate::config::BIG_STRIDE_NUM;
 use crate::sync::UPSafeCell;
-use alloc::collections::VecDeque;
+
 use alloc::sync::Arc;
+use alloc::vec::Vec;
 use lazy_static::*;
 ///A array of `TaskControlBlock` that is thread-safe
 pub struct TaskManager {
-    ready_queue: VecDeque<Arc<TaskControlBlock>>,
+    ready_queue: Vec<Arc<TaskControlBlock>>,
 }
 
 /// A simple FIFO scheduler.
@@ -14,16 +16,37 @@ impl TaskManager {
     ///Creat an empty TaskManager
     pub fn new() -> Self {
         Self {
-            ready_queue: VecDeque::new(),
+            ready_queue: Vec::new(),
         }
     }
     /// Add process back to ready queue
     pub fn add(&mut self, task: Arc<TaskControlBlock>) {
-        self.ready_queue.push_back(task);
+        self.ready_queue.push(task);
     }
     /// Take a process out of the ready queue
     pub fn fetch(&mut self) -> Option<Arc<TaskControlBlock>> {
-        self.ready_queue.pop_front()
+        // enumerate ready queue to get the one with the smallest stride
+        if self.ready_queue.is_empty() {
+            return None;
+        }
+        let mut min_stride = BIG_STRIDE_NUM;
+        let mut min_stride_task_idx = 0;
+        for i in 0..self.ready_queue.len() {
+            let task = self.ready_queue[i].inner_exclusive_access();
+            if task.task_status == TaskStatus::Ready
+                && task.stride < min_stride
+                && task.stride != 0
+            {
+                min_stride_task_idx = i;
+                min_stride = task.stride;
+            }
+        }
+        // take the task with the smallest stride
+        let task = self.ready_queue.remove(min_stride_task_idx);
+        // set the stride to add the pass
+        let pass = task.inner_exclusive_access().pass;
+        task.inner_exclusive_access().stride += pass;
+        Some(task)
     }
 }
 

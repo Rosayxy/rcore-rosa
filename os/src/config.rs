@@ -28,3 +28,9 @@ pub const MMIO: &[(usize, usize)] = &[(0x10001000, 0x1000)];
 
 /// implemented syscall nums
 pub const SYSCALL_NUMS: usize = 5;
+
+/// BIG STRIDE NUM（Strider!）
+pub const BIG_STRIDE_NUM: usize = 0x1000000;
+
+/// initial priority
+pub const INIT_PRIORITY: usize = 16;
