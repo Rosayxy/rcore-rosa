@@ -1,5 +1,5 @@
 //! Types related to task management
-
+use crate::task::MapPermission;
 use super::TaskContext;
 use super::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 use crate::config::{BIG_STRIDE_NUM, INIT_PRIORITY, TRAP_CONTEXT_BASE};
@@ -9,7 +9,7 @@ use crate::trap::{trap_handler, TrapContext};
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefMut;
-use crate::task::MapPermission;
+
 /// Task control block structure
 ///
 /// Directly save the contents that will not change during running
@@ -311,9 +311,13 @@ impl TaskControlBlock {
     pub fn insert_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr, permission: MapPermission) {
         let mut inner = self.inner_exclusive_access();
         inner.memory_set.insert_framed_area(start_va, end_va, permission);
+        let mut inner = self.inner_exclusive_access();
+        inner.memory_set.insert_framed_area(start_va, end_va, permission);
     }
     /// unmap a frame from the task's memory set
     pub fn unmap_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr) {
+        let mut inner = self.inner_exclusive_access();
+        inner.memory_set.unmap_framed_area(start_va, end_va);
         let mut inner = self.inner_exclusive_access();
         inner.memory_set.unmap_framed_area(start_va, end_va);
     }
