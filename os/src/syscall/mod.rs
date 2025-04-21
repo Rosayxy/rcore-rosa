@@ -60,7 +60,6 @@ pub fn get_trace_idx(ty: usize) -> usize {
         SYSCALL_MMAP => 6,
         SYSCALL_MUNMAP => 7,
         _ => 8,
-        _ => 8,
     }
 }
 

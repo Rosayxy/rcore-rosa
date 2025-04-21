@@ -117,17 +117,6 @@ pub fn virt_to_phys(virt:usize)->*mut u8{
     let phys = unsafe { ppn.add(offset) as *mut u8 };
     phys
 }
-pub fn virt_to_phys(virt:usize)->*mut u8{
-    let vpn = virt/PAGE_SIZE;
-    let token = current_user_token();
-    let page_table = crate::mm::page_table::PageTable::from_token(token);
-    let ppn = page_table.translate(VirtPageNum::from(vpn)).unwrap().ppn();
-    let offset = virt % PAGE_SIZE;
-    let ppn_ = ppn.get_bytes_array();
-    let ppn = ppn_.as_mut_ptr();
-    let phys = unsafe { ppn.add(offset) as *mut u8 };
-    phys
-}
 
 /// YOUR JOB: get time with second and microsecond
 /// HINT: You might reimplement it with virtual memory management.

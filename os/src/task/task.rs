@@ -1,5 +1,5 @@
 //! Types related to task management
-
+use crate::task::MapPermission;
 use super::TaskContext;
 use super::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 use crate::config::{BIG_STRIDE_NUM, INIT_PRIORITY, TRAP_CONTEXT_BASE};
@@ -9,8 +9,7 @@ use crate::trap::{trap_handler, TrapContext};
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefMut;
-use crate::task::MapPermission;
-use crate::task::MapPermission;
+
 /// Task control block structure
 ///
 /// Directly save the contents that will not change during running
