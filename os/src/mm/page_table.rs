@@ -167,6 +167,26 @@ impl PageTable {
     pub fn token(&self) -> usize {
         8usize << 60 | self.root_ppn.0
     }
+    /// for homework
+    #[allow(unused)]
+    pub fn print_translation_dbg(&self, va: VirtAddr) {
+        let pte = self.find_pte(va.clone().floor()).unwrap();
+        println!("va = {:?}, pte = {:?}", va, pte);
+        let aligned_pa: PhysAddr = pte.ppn().into();
+        let valid = pte.is_valid();
+        if !valid{
+            println!("page fault: pte is invalid");
+            return;
+        }else{
+            offset = va.page_offset();
+            let aligned_pa_usize: usize = aligned_pa.into();
+            let pa = aligned_pa_usize + offset;
+            println!("va = {:?}, pa = {:?}", va, pa);
+            // get content
+            let content = unsafe { *(pa as *const u8) };
+            println!("content = {:?}", content);
+        }
+    }
 }
 
 /// Translate&Copy a ptr[u8] array with LENGTH len to a mutable u8 Vec through page table
