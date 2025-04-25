@@ -10,6 +10,7 @@ use crate::trap::{trap_handler, TrapContext};
 use alloc::sync::{Arc, Weak};
 use alloc::vec;
 use alloc::vec::Vec;
+use alloc::string::String;
 use core::cell::RefMut;
 use crate::task::MapPermission;
 /// Task control block structure
@@ -81,6 +82,16 @@ pub struct TaskControlBlockInner {
 
     /// the priority used in the scheduling algorithm
     pub priority: usize,
+
+    /// construct the link，外层 Vec 每一项是一个 link 的项，内层 Vec 其实是一个 pair, first 是 key second 是 value
+    /// links 应该是 link name 到（被创建出来过的）真实路径，包含自己；nlink 记录的是 linkname 的数量，fd_helper 记录的也是 link_name
+    pub links: Vec<(String,String)>,
+
+    /// the file descriptor helper
+    pub fd_helper: Vec<Option<String>>,
+
+    /// store the passed in fstat pointer in phys addr
+    pub fstat_ptrs: Vec<Option<usize>>,
 }
 
 impl TaskControlBlockInner {
@@ -154,6 +165,9 @@ impl TaskControlBlock {
                     stride: 0,
                     pass: BIG_STRIDE_NUM/INIT_PRIORITY,
                     priority: INIT_PRIORITY,
+                    links: vec![],
+                    fd_helper: vec![None,None,None],
+                    fstat_ptrs: vec![None,None,None],
                 })
             },
         };
@@ -238,6 +252,9 @@ impl TaskControlBlock {
                     stride: 0,
                     pass: BIG_STRIDE_NUM/parent_inner.priority,
                     priority: parent_inner.priority,
+                    links: vec![],
+                    fd_helper: vec![None,None,None],
+                    fstat_ptrs: vec![None,None,None],
                 })
             },
         });
@@ -288,6 +305,17 @@ impl TaskControlBlock {
                     stride: 0,
                     pass: BIG_STRIDE_NUM/parent_inner.priority,
                     priority: parent_inner.priority,
+                    fd_table: vec![
+                        // 0 -> stdin
+                        Some(Arc::new(Stdin)),
+                        // 1 -> stdout
+                        Some(Arc::new(Stdout)),
+                        // 2 -> stderr
+                        Some(Arc::new(Stdout)),
+                    ],
+                    links: vec![],
+                    fd_helper: vec![None, None, None],
+                    fstat_ptrs: vec![None, None, None],
                 })
             },
         });

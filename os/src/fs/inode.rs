@@ -13,6 +13,8 @@ use alloc::vec::Vec;
 use bitflags::*;
 use easy_fs::{EasyFileSystem, Inode};
 use lazy_static::*;
+use crate::fs::Stat;
+use crate::fs::StatMode;
 
 /// inode in memory
 /// A wrapper around a filesystem inode
@@ -26,6 +28,7 @@ pub struct OSInode {
 pub struct OSInodeInner {
     offset: usize,
     inode: Arc<Inode>,
+    nlink: usize,
 }
 
 impl OSInode {
@@ -34,7 +37,7 @@ impl OSInode {
         Self {
             readable,
             writable,
-            inner: unsafe { UPSafeCell::new(OSInodeInner { offset: 0, inode }) },
+            inner: unsafe { UPSafeCell::new(OSInodeInner { offset: 0, inode, nlink: 1 }) },
         }
     }
     /// read all data from the inode
@@ -56,6 +59,7 @@ impl OSInode {
 }
 
 lazy_static! {
+    /// root inode export
     pub static ref ROOT_INODE: Arc<Inode> = {
         let efs = EasyFileSystem::open(BLOCK_DEVICE.clone());
         Arc::new(EasyFileSystem::root_inode(&efs))
@@ -155,5 +159,37 @@ impl File for OSInode {
             total_write_size += write_size;
         }
         total_write_size
+    }
+    fn decl_nlink(&self, times: usize) -> bool {
+        println!("rosa debug: decl_nlink");
+        let mut inner = self.inner.exclusive_access();
+        println!("{} decl_nlink {}", inner.nlink, times);
+        if inner.nlink < times {
+            return false;
+        }
+        inner.nlink -= times;
+        true
+    }
+    fn incl_nlink(&self, times: usize) -> bool {
+        let mut inner = self.inner.exclusive_access();
+        inner.nlink += times;
+        true
+    }
+    fn fstat(&self) -> Stat {
+        let inner = self.inner.exclusive_access();
+        Stat {
+            dev: 0,
+            ino: {
+                let inode = inner.inode.block_id<< 32 | inner.inode.block_offset as usize;
+                inode as u64
+            },
+            mode: if self.readable || self.writable {
+                StatMode::FILE
+            } else {
+                StatMode::DIR
+            }, // note not sure about this implementation
+            nlink: inner.nlink as u32,
+            pad: [0; 7],
+        }
     }
 }

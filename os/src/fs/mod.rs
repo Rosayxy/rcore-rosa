@@ -1,6 +1,6 @@
 //! File trait & inode(dir, file, pipe, stdin, stdout)
 
-mod inode;
+pub mod inode;
 mod stdio;
 
 use crate::mm::UserBuffer;
@@ -15,6 +15,12 @@ pub trait File: Send + Sync {
     fn read(&self, buf: UserBuffer) -> usize;
     /// write to the file from buf, return the number of bytes written
     fn write(&self, buf: UserBuffer) -> usize;
+    /// fstat the file, return stat
+    fn fstat(&self) -> Stat;
+    /// linking the file
+    fn incl_nlink(&self, times: usize) -> bool;
+    /// unlinking the file
+    fn decl_nlink(&self, times: usize) -> bool;
 }
 
 /// The stat of a inode

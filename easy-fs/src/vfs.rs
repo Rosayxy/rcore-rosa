@@ -8,8 +8,10 @@ use alloc::vec::Vec;
 use spin::{Mutex, MutexGuard};
 /// Virtual filesystem layer over easy-fs
 pub struct Inode {
-    block_id: usize,
-    block_offset: usize,
+    /// getting the block id
+    pub block_id: usize,
+    /// getting the offset of the block
+    pub block_offset: usize,
     fs: Arc<Mutex<EasyFileSystem>>,
     block_device: Arc<dyn BlockDevice>,
 }
@@ -71,6 +73,34 @@ impl Inode {
                     self.block_device.clone(),
                 ))
             })
+        })
+    }
+    /// implemented by rosa: remove inode under current inode by name
+    pub fn remove(&self, name: &str, disk_inode: &mut DiskInode) -> bool {
+        assert!(disk_inode.is_dir());
+        let file_count = (disk_inode.size as usize) / DIRENT_SZ;
+        let mut dirent = DirEntry::empty();
+        for i in 0..file_count {
+            assert_eq!(
+                disk_inode.read_at(DIRENT_SZ * i, dirent.as_bytes_mut(), &self.block_device,),
+                DIRENT_SZ,
+            );
+            if dirent.name() == name {
+                dirent.name = [0;28];   
+                disk_inode.write_at(
+                    i * DIRENT_SZ,
+                    dirent.as_bytes(),
+                    &self.block_device,
+                );
+                return true;
+            }
+        }
+        false
+    }
+    /// Call a function over a disk inode to modify it
+    pub fn remove_inode(&self, name: &str) -> bool{
+        self.modify_disk_inode(|disk_inode|{
+            return self.remove(name, disk_inode);
         })
     }
     /// Increase the size of a disk inode

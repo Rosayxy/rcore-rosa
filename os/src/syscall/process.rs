@@ -14,7 +14,6 @@ use crate::{
 use crate::{
     config::PAGE_SIZE, mm::{MapPermission, VirtAddr, VirtPageNum}, task::{get_current_ranges, insert_framed_area, unmap_framed_area}, timer::get_time_us, trace_array::read_from_array
 };
-
 use super::get_trace_idx;
 
 #[repr(C)]
@@ -118,6 +117,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
     }
     // ---- release current PCB automatically
 }
+#[allow(unused)]
 pub fn virt_to_phys(virt:usize)->*mut u8{
     let vpn = virt/PAGE_SIZE;
     let token = current_user_token();
@@ -155,6 +155,7 @@ pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
     0
 }
 /// check the given address in trace is accessible
+#[allow(unused)]
 pub fn is_legal_access(address:usize,read_perm:bool,write_perm:bool)->bool{
     let vpn = address/PAGE_SIZE;
     let ranges = crate::task::get_ranges();
@@ -169,6 +170,7 @@ pub fn is_legal_access(address:usize,read_perm:bool,write_perm:bool)->bool{
 }
 /// TODO: Finish sys_trace to pass testcases
 /// HINT: You might reimplement it with virtual memory management.
+#[allow(unused)]
 pub fn sys_trace(_trace_request: usize, _id: usize, _data: usize) -> isize {
     // check address first
     if _trace_request == 0 { // trace read
@@ -295,15 +297,17 @@ pub fn sys_sbrk(size: i32) -> isize {
 /// HINT: fork + exec =/= spawn
 pub fn sys_spawn(_path: *const u8) -> isize {
     trace!(
-        "kernel:pid[{}] sys_spawn",
+        "kernel:pid[{}] sys_spawn!",
         current_task().unwrap().pid.0
     );
-    trace!("kernel:pid[{}] sys_fork", current_task().unwrap().pid.0);
+
     let current_task = current_task().unwrap();
     let token = current_user_token();
     let path = translated_str(token, _path);
-    if let Some(data) = get_app_data_by_name(path.as_str()) {
-        let new_task = current_task.spawn(data);
+
+    if let Some(data) = open_file(path.as_str(), OpenFlags::RDONLY) {
+        let all_data = data.read_all();
+        let new_task = current_task.spawn(all_data.as_slice());
         let new_pid = new_task.pid.0;
         // modify trap context of new_task, because it returns immediately after switching
         let trap_cx = new_task.inner_exclusive_access().get_trap_cx();
@@ -316,16 +320,6 @@ pub fn sys_spawn(_path: *const u8) -> isize {
     } else {
         -1
     }
-    // let new_task = current_task.fork();
-    // let new_pid = new_task.pid.0;
-    // // modify trap context of new_task, because it returns immediately after switching
-    // let trap_cx = new_task.inner_exclusive_access().get_trap_cx();
-    // // we do not have to move to next instruction since we have done it before
-    // // for child process, fork returns 0
-    // trap_cx.x[10] = 0;
-    // // add new task to scheduler
-    // add_task(new_task);
-    // new_pid as isize
 }
 
 // YOUR JOB: Set task priority.

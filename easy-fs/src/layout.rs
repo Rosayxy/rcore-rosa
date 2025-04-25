@@ -390,9 +390,12 @@ impl DiskInode {
 }
 /// A directory entry
 #[repr(C)]
+#[derive(Clone)]
 pub struct DirEntry {
-    name: [u8; NAME_LENGTH_LIMIT + 1],
-    inode_id: u32,
+    /// name of entry
+    pub name: [u8; NAME_LENGTH_LIMIT + 1],
+    /// id of entry
+    pub inode_id: u32,
 }
 /// Size of a directory entry
 pub const DIRENT_SZ: usize = 32;
