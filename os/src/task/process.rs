@@ -49,6 +49,20 @@ pub struct ProcessControlBlockInner {
     pub semaphore_list: Vec<Option<Arc<Semaphore>>>,
     /// condvar list
     pub condvar_list: Vec<Option<Arc<Condvar>>>,
+    /// is deadlock detection enabled?
+    pub deadlock_detection_enabled: bool,
+    /// structs for deadlock detection
+    pub avail_mutexes: Vec<bool>, // 这个 index 和 mutex_list 的 index 一一对应
+    /// avail semaphores
+    pub avail_semaphores: Vec<usize>, // 这个 index 和 semaphore_list 的 index 一一对应
+    /// allocation matrix for mutexes
+    pub allocation_matrix: Vec<Vec<bool>>, // allocation_matrix[i][j] = true means task i holds mutex j
+    /// allocation matrix for semaphores
+    pub allocation_matrix_semaphore: Vec<Vec<usize>>, // allocation_matrix_semaphore[i][j] = true means task i holds semaphore j
+    /// need matrix for mutexes
+    pub need_matrix: Vec<Vec<bool>>, // need_matrix[i][j] = true means task i needs mutex j
+    /// need matrix for semaphores
+    pub need_matrix_semaphore: Vec<Vec<usize>>, // need_matrix_semaphore[i][j] = true means task i needs semaphore j with some amount
 }
 
 impl ProcessControlBlockInner {
@@ -119,6 +133,13 @@ impl ProcessControlBlock {
                     mutex_list: Vec::new(),
                     semaphore_list: Vec::new(),
                     condvar_list: Vec::new(),
+                    deadlock_detection_enabled: false,
+                    avail_mutexes: Vec::new(),
+                    avail_semaphores: Vec::new(),
+                    allocation_matrix: [Vec::new()].to_vec(),
+                    allocation_matrix_semaphore: [Vec::new()].to_vec(),
+                    need_matrix: [Vec::new()].to_vec(),
+                    need_matrix_semaphore: [Vec::new()].to_vec(),
                 })
             },
         });
@@ -245,6 +266,13 @@ impl ProcessControlBlock {
                     mutex_list: Vec::new(),
                     semaphore_list: Vec::new(),
                     condvar_list: Vec::new(),
+                    deadlock_detection_enabled: false,
+                    avail_mutexes: Vec::new(),
+                    avail_semaphores: Vec::new(),
+                    allocation_matrix: [Vec::new()].to_vec(),
+                    allocation_matrix_semaphore: [Vec::new()].to_vec(),
+                    need_matrix: [Vec::new()].to_vec(),
+                    need_matrix_semaphore: [Vec::new()].to_vec(),
                 })
             },
         });

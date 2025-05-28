@@ -3,7 +3,7 @@ use crate::{
     task::{add_task, current_task, TaskControlBlock},
     trap::{trap_handler, TrapContext},
 };
-use alloc::sync::Arc;
+use alloc::{sync::Arc, vec::Vec};
 /// thread create syscall
 pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
     trace!(
@@ -41,6 +41,23 @@ pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
         tasks.push(None);
     }
     tasks[new_task_tid] = Some(Arc::clone(&new_task));
+    // push a new line into the allocation matrix and need matrix 所以可以通过 tid 访问
+    let allocation_matrix = &mut process_inner.allocation_matrix;
+    while allocation_matrix.len() < new_task_tid + 1 {
+        allocation_matrix.push(Vec::new());
+    }
+    let allocation_matrix_semaphore = &mut process_inner.allocation_matrix_semaphore;
+    while allocation_matrix_semaphore.len() < new_task_tid + 1 {
+        allocation_matrix_semaphore.push(Vec::new());
+    }
+    let need_matrix = &mut process_inner.need_matrix;
+    while need_matrix.len() < new_task_tid + 1 {
+        need_matrix.push(Vec::new());
+    }
+    let need_matrix_semaphore = &mut process_inner.need_matrix_semaphore;
+    while need_matrix_semaphore.len() < new_task_tid + 1 {
+        need_matrix_semaphore.push(Vec::new());
+    }
     let new_task_trap_cx = new_task_inner.get_trap_cx();
     *new_task_trap_cx = TrapContext::app_init_context(
         entry,

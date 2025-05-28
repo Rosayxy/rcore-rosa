@@ -12,6 +12,12 @@ pub trait Mutex: Sync + Send {
     fn lock(&self);
     /// Unlock the mutex
     fn unlock(&self);
+    /// Check if the mutex is locked
+    /// This is a default implementation that can be overridden
+    fn is_locked(&self) -> bool {
+        // Default implementation, can be overridden
+        false
+    }
 }
 
 /// Spinlock Mutex struct
@@ -49,6 +55,11 @@ impl Mutex for MutexSpin {
         trace!("kernel: MutexSpin::unlock");
         let mut locked = self.locked.exclusive_access();
         *locked = false;
+    }
+    fn is_locked(&self) -> bool {
+        trace!("kernel: MutexSpin::is_locked");
+        let locked = *self.locked.exclusive_access();
+        locked
     }
 }
 
@@ -101,5 +112,9 @@ impl Mutex for MutexBlocking {
         } else {
             mutex_inner.locked = false;
         }
+    }
+    fn is_locked(&self) -> bool {
+        let mutex_inner = self.inner.exclusive_access();
+        return mutex_inner.locked;
     }
 }
