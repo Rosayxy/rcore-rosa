@@ -1,5 +1,9 @@
 # rCore-Tutorial-Code-2025S
 
+代码填空 by Rosayxy
+
+如果你选修清华大学计算机系相关课程，并且正在做与本仓库相同的作业，请先自己实现后再参考。在课程允许参考的前提下，参考本仓库后，务必在 README 和代码注释中记录参考本仓库的内容
+
 ### Code
 - [Soure Code of labs for 2025S](https://github.com/LearningOS/rCore-Tutorial-Code-2025S)
 ### Documents
